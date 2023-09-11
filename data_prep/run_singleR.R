@@ -1,3 +1,4 @@
+# conda env: r-mofa-singler 
 # this is for use part of the data as reference and do the supervised learning:
 
 library(Seurat)
