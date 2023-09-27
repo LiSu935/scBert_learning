@@ -14,11 +14,19 @@ option_list <- list(
   make_option(c("-r","--ref_file"),type = "character",default = "hPancreas_train.h5ad",
               help = "ref_file", metavar = "character"),
   make_option(c("-q","--querry_file"), type = "character", default = "hPancreas_test.h5ad",
-              help = "querry_file", metavar = "character")
+              help = "querry_file", metavar = "character"),
+  make_option(c("-l","--ref_label_file"), type = "character", default = "ms_train_label.csv",
+              help = "ref_label_file", metavar = "character")
 )
 
 opt_parser = OptionParser(option_list = option_list)
 opt = parse_args(opt_parser)
+
+input_dir = "/storage/htc/joshilab/Su_Li/Alg_development/scbert/data/data/ExpAndLabel_csv/ms/"
+output_dir = "/storage/htc/joshilab/Su_Li/Alg_development/scbert/data/data/ExpAndLabel_csv/singleR_out/"
+train_file_input = "ms_train_exp.csv"
+test_file_input = "ms_test_exp.csv"
+ref_label_file_input = "ms_train_label.csv"
 
 
        
@@ -26,38 +34,47 @@ input_dir = opt$input_dir
 output_dir = opt$output_dir
 train_file_input = opt$ref_file
 test_file_input = opt$querry_file
+ref_label_file_input = opt$ref_label_file
 
-
-train_singler = function(train_file="seu_obj_few25_s400.h5ad", test_file='seu_obj_ForTest.h5ad') {
+train_singler = function(train_file="seu_obj_few25_s400.h5ad", test_file='seu_obj_ForTest.h5ad', ref_label_file) {
+      
        train_pre = strsplit(train_file, split='.',fixed=T)[[1]][1]
+       train_ext = strsplit(train_file, split='.',fixed=T)[[1]][2]
        test_pre = strsplit(test_file, split='.',fixed=T)[[1]][1]
-       
-       Convert(paste0(input_dir, train_file), dest = "h5seurat", overwrite = TRUE)
-       s400_ob <- LoadH5Seurat(paste0(input_dir, train_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
-       
-       s400_ob_mat = s400_ob@assays$RNA@data
-       
-       Convert(paste0(input_dir, test_file), dest = "h5seurat", overwrite = TRUE)
-       test_ob <- LoadH5Seurat(paste0(input_dir, test_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
+       test_ext = strsplit(test_file, split='.',fixed=T)[[1]][2]  
 
-       test_mat_m = test_ob@assays$RNA@data
+       if (train_ext == '.h5ad') {
+         Convert(paste0(input_dir, train_file), dest = "h5seurat", overwrite = TRUE)
+         s400_ob <- LoadH5Seurat(paste0(input_dir, train_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
+         s400_ob_mat = s400_ob@assays$RNA@data
+       } else if (train_ext == 'csv') {
+         train_mat = read.csv(paste0(input_dir, train_file), row.names = NULL, header= FALSE)
+         s400_ob_mat = t(as.matrix(train_mat))
+       }
        
-       # load test data from csv:
-       #test_mat = read.csv(paste0(output_dir, test_pre, "_df.csv"), row.names = 1, header= TRUE)
-       #test_mat_m = as.matrix(test_mat)
+      
+       if (test_ext == '.h5ad') {
+         Convert(paste0(input_dir, test_file), dest = "h5seurat", overwrite = TRUE)
+         test_ob <- LoadH5Seurat(paste0(input_dir, test_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
+         test_ob_mat = s400_ob@assays$RNA@data
+       } else if (test_ext == 'csv') {
+         test_mat = read.csv(paste0(input_dir, test_file), row.names = NULL, header= FALSE)
+         test_ob_mat = t(as.matrix(test_mat))
+       }
+
        
        # load label for the s400_ob_mat:
-       s400_ob_mat_label = read.csv(paste0(input_dir,train_pre,".csv"))
+       s400_ob_mat_label = read.csv(paste0(input_dir,ref_label_file))
        
        # run singleR and output the labels
        
-       pred.test <- SingleR(test=test_mat_m, ref=s400_ob_mat, labels=s400_ob_mat_label$celltype, de.method="wilcox", de.n=50)
+       pred.test <- SingleR(test=test_ob_mat, ref=s400_ob_mat, labels=s400_ob_mat_label$celltype, de.method="wilcox", de.n=50)
        table(pred.test$labels)
        write.table(pred.test['labels'], file=paste(output_dir ,test_pre,"_", train_pre, "_singler_labels",".csv",sep=""), row.names = TRUE, col.names = NA, sep=",", quote = FALSE)
        
 }
 
-train_singler(train_file=train_file_input,test_file=test_file_input)
+train_singler(train_file=train_file_input,test_file=test_file_input, ref_label_file = ref_label_file_input)
 
 
 
