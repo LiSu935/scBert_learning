@@ -1,11 +1,13 @@
 # conda env: r-mofa-singler 
 # this is for use part of the data as reference and do the supervised learning:
 
-library(Seurat)
-library(SeuratDisk)
-library(SingleR)
-library(optparse)
-
+suppressPackageStartupMessages({
+    
+  library(Seurat)
+  library(SeuratDisk)
+  library(SingleR)
+  library(optparse)
+})
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", default = "/storage/htc/joshilab/Su_Li/Alg_development/scbert/data/data/TrainData/", 
               help = "input path", metavar = "character"),
