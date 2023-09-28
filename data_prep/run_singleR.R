@@ -50,7 +50,7 @@ train_singler = function(train_file="seu_obj_few25_s400.h5ad", test_file='seu_ob
          s400_ob <- LoadH5Seurat(paste0(input_dir, train_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
          s400_ob_mat = s400_ob@assays$RNA@data
        } else if (train_ext == 'csv') {
-         train_mat = read.csv(paste0(input_dir, train_file), row.names = NULL, header= FALSE)
+         train_mat = read.csv(paste0(input_dir, train_file), row.names = 1, header= TRUE)#row.names = NULL, header= FALSE)
          s400_ob_mat = t(as.matrix(train_mat))
        }
        
@@ -60,7 +60,7 @@ train_singler = function(train_file="seu_obj_few25_s400.h5ad", test_file='seu_ob
          test_ob <- LoadH5Seurat(paste0(input_dir, test_pre, ".h5seurat"), meta.data = FALSE, misc = FALSE)
          test_ob_mat = s400_ob@assays$RNA@data
        } else if (test_ext == 'csv') {
-         test_mat = read.csv(paste0(input_dir, test_file), row.names = NULL, header= FALSE)
+         test_mat = read.csv(paste0(input_dir, test_file), row.names = 1, header= TRUE)#row.names = NULL, header= FALSE)
          test_ob_mat = t(as.matrix(test_mat))
        }
 
